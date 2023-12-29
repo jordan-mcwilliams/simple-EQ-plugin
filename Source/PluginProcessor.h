@@ -60,6 +60,21 @@ public:
     juce::AudioProcessorValueTreeState apvts {*this, nullptr, "Parameters", createParameterLayout()};
     
 private:
+    
+    // use filter namespace to avoid issues with dsp:: namespace as described in "Learn Modern C++ by Building an Audio Plugin (w/ JUCE Framework) - Full Course" youtube video by freeCodeCamp.org
+    // IIR is a Filter Class
+    using Filter = juce::dsp::IIR::Filter<float>;
+    
+    // Reasoning for this: 34:07 in the video mentioned in the comment above, too long to type out
+    using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
+    
+    using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
+    // Must prepare these in the SimpleEQAudioProcessor::prepareToPlay() function in PluginProcessor.cpp / .h
+    
+    MonoChain leftChain, rightChain;
+    
+    
+    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessor)
 };
