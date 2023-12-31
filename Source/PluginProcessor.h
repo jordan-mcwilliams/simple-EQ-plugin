@@ -23,7 +23,7 @@ enum Slope
 
 struct ChainSettings
 {
-    float peakFreq { 0 }, peakGainInDecibels {0}, peakQuality {1.f};
+    float peakFreq {0}, peakGainInDecibels {0}, peakQuality {1.f};
     float lowCutFreq {0}, highCutFreq {0};
     Slope lowCutSlope {Slope::Slope_12}, highCutSlope {Slope::Slope_12};
 };
@@ -77,8 +77,8 @@ public:
 
     // static because we don't use any member variables
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
-    
     juce::AudioProcessorValueTreeState apvts {*this, nullptr, "Parameters", createParameterLayout()};
+    
     
 private:
     
@@ -106,6 +106,13 @@ private:
     using Coefficients = Filter::CoefficientsPtr;
     static void updateCoefficients(Coefficients& old, const Coefficients& replacements);
     
+    template<int Index, typename ChainType, typename CoefficientType>
+    void update(ChainType& chain, const CoefficientType& coefficients)
+    {
+        updateCoefficients(chain.template get<Index>().coefficients, coefficients[Index]);
+        chain.template setBypassed<Index>(false);
+    }
+    
     template<typename ChainType, typename CoefficientType>
     void updateCutFilter(ChainType& leftLowCut, const CoefficientType& cutCoefficients, const Slope& lowCutSlope)
     {
@@ -114,51 +121,30 @@ private:
         leftLowCut.template setBypassed<2>(true);
         leftLowCut.template setBypassed<3>(true);
         
-        //switch( chainSettings.lowCutSlope )
         switch ( lowCutSlope )
         {
-                
-            // This is horribly unoptimized but we will come back and clean it up later
-            // ToDo: eliminate repitition... there HAS to be a better way to do this
-            case Slope_12:
-            {
-                *leftLowCut.template get<0>().coefficients = *cutCoefficients[0];
-                leftLowCut.template setBypassed<0>(false);
-                break;
-            }
-            case Slope_24:
-            {
-                *leftLowCut.template get<0>().coefficients = *cutCoefficients[0];
-                leftLowCut.template setBypassed<0>(false);
-                *leftLowCut.template get<1>().coefficients = *cutCoefficients[1];
-                leftLowCut.template setBypassed<1>(false);
-                break;
-            }
-            case Slope_36:
-            {
-                *leftLowCut.template get<0>().coefficients = *cutCoefficients[0];
-                leftLowCut.template setBypassed<0>(false);
-                *leftLowCut.template get<1>().coefficients = *cutCoefficients[1];
-                leftLowCut.template setBypassed<1>(false);
-                *leftLowCut.template get<2>().coefficients = *cutCoefficients[2];
-                leftLowCut.template setBypassed<2>(false);
-                break;
-            }
             case Slope_48:
             {
-                *leftLowCut.template get<0>().coefficients = *cutCoefficients[0];
-                leftLowCut.template setBypassed<0>(false);
-                *leftLowCut.template get<1>().coefficients = *cutCoefficients[1];
-                leftLowCut.template setBypassed<1>(false);
-                *leftLowCut.template get<2>().coefficients = *cutCoefficients[2];
-                leftLowCut.template setBypassed<2>(false);
-                *leftLowCut.template get<3>().coefficients = *cutCoefficients[3];
-                leftLowCut.template setBypassed<3>(false);
-                break;
+                update<3>(leftLowCut, cutCoefficients);
+            }
+                
+            case Slope_36:
+            {
+                update<2>(leftLowCut, cutCoefficients);
+            }
+                
+            case Slope_24:
+            {
+                update<1>(leftLowCut, cutCoefficients);
+            }
+                
+            case Slope_12:
+            {
+                update<0>(leftLowCut, cutCoefficients);
             }
         }
+        
     }
-    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessor)
 };

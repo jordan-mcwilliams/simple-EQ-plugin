@@ -180,15 +180,6 @@ void SimpleEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
         buffer.clear (i, 0, buffer.getNumSamples());
     
     auto chainSettings = getChainSettings(apvts);
-    
-    /*
-    REPLACED THE FOLLOWING CODE WITH updatePeakFilter(chainSettings); keeping just in case
-     
-     auto peakCoefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), chainSettings.peakFreq, chainSettings.peakQuality, juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));
-    
-    *leftChain.get<ChainPositions::Peak>().coefficients = *peakCoefficients;
-    *rightChain.get<ChainPositions::Peak>().coefficients = *peakCoefficients;
-    */
     updatePeakFilter(chainSettings);
 
     auto cutCoefficients = juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.lowCutFreq, getSampleRate(), 2 * (chainSettings.lowCutSlope + 1));
@@ -199,7 +190,6 @@ void SimpleEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     auto& rightLowCut = rightChain.get<ChainPositions::LowCut>();
     updateCutFilter(rightLowCut, cutCoefficients, chainSettings.lowCutSlope);
         
-    // 36:23 in simpleEQ freeCodeCamp.org youtube video
     // ProcessingChain requires a ProcessingContext to be passed to it in order to run the audio through the links in the chain
     // to make a ProcessingContext we need to supply it with an AudioBlock instance
     juce::dsp::AudioBlock<float> block(buffer);
@@ -287,10 +277,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::crea
     
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"Peak Quality", 1}, "Peak Quality", juce::NormalisableRange<float>(0.1f, 10.f, 0.05f, 1.f), 1.f));
     
-    // for our EQ choices we are using specific choices and not a range like with a slider, so we need the object 
-    // AudioParameterChoice(const String &parameterID, const String &parameterName, const StringArray &choices, int defaultItemIndex)
-    // Need string array for choices for AudioParameterChoice so we will make that first
-    
+    // String array for our param choices (12dB/oct, 24dB/oct, etc)
     juce::StringArray stringArray;
     // i < 4 because we have four choices for this simpleEQ project
     for (int i = 0; i < 4; i++)
