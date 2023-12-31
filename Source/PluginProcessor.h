@@ -107,7 +107,7 @@ private:
     static void updateCoefficients(Coefficients& old, const Coefficients& replacements);
     
     template<typename ChainType, typename CoefficientType>
-    void updateCutFilter(ChainType& leftLowCut, const CoefficientType& cutCoefficients, const Slope& lowCutSlope) /*const ChainSettings& chainSettings*/
+    void updateCutFilter(ChainType& leftLowCut, const CoefficientType& cutCoefficients, const Slope& lowCutSlope)
     {
         leftLowCut.template setBypassed<0>(true);
         leftLowCut.template setBypassed<1>(true);
