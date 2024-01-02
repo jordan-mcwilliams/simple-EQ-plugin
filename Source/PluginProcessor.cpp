@@ -240,6 +240,9 @@ void SimpleEQAudioProcessor::updateCoefficients(Coefficients &old, const Coeffic
     *old = *replacements;
 }
 
+// We could technically simplify this further by making a function for cutFilters
+// then passing in a variable to determine whether it's highCut or lowCut, but
+// for now this will suffice
 void SimpleEQAudioProcessor::updateLowCutFilters(const ChainSettings &chainSettings)
 {
     auto cutCoefficients = juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.lowCutFreq, getSampleRate(), 2 * (chainSettings.lowCutSlope + 1));

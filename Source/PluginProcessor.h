@@ -10,8 +10,6 @@
 
 #include <JuceHeader.h>
 
-// Going to extract parameters from AudioValueProcessorValueTreeState
-
 // enum declaration for slope parameter
 enum Slope
 {
@@ -78,8 +76,7 @@ public:
     // static because we don't use any member variables
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     juce::AudioProcessorValueTreeState apvts {*this, nullptr, "Parameters", createParameterLayout()};
-    
-    
+
 private:
     
     // use filter namespace to avoid issues with dsp:: namespace as described in "Learn Modern C++ 
@@ -116,7 +113,6 @@ private:
     template<typename ChainType, typename CoefficientType>
     void updateCutFilter(ChainType& chain, const CoefficientType& coefficients, const Slope& slope)
     {
-        
         chain.template setBypassed<0>(true);
         chain.template setBypassed<1>(true);
         chain.template setBypassed<2>(true);
