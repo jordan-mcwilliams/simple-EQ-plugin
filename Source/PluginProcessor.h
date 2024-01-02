@@ -81,6 +81,22 @@ void updateCutFilter(ChainType& chain, const CoefficientType& coefficients, cons
     }
 }
 
+// Need helper functions for producing cut coefficients
+// If we want to implement these functions in header files that are included
+// in multiple locations (like our plugin processor is included in PluginProcessor.cpp
+// and .h and PluginEditor.cpp and .h) we need to use the inline keyword, otherwise compiler
+// will produce a definition for this function each place the header file is included,
+//and the linker will not know which compiled .cpp file to use for the definition
+inline auto makeLowCutFilter(const ChainSettings& chainSettings, double sampleRate)
+{
+    return juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.lowCutFreq, sampleRate, 2 * (chainSettings.lowCutSlope + 1));
+}
+
+inline auto makeHighCutFilter(const ChainSettings& chainSettings, double sampleRate)
+{
+    return juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(chainSettings.highCutFreq, sampleRate, 2 * (chainSettings.highCutSlope + 1));
+}
+
 //==============================================================================
 /**
 */
@@ -131,7 +147,6 @@ public:
 
 private:
     MonoChain leftChain, rightChain;
-    
     void updatePeakFilter(const ChainSettings& chainSettings);
     void updateLowCutFilters(const ChainSettings& chainSettings);
     void updateHighCutFilters(const ChainSettings& chainSettings);
