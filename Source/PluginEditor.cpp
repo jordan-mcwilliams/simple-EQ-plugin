@@ -61,6 +61,7 @@ void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
         if (!monoChain.isBypassed<ChainPositions::Peak>())
             mag *= peak.coefficients->getMagnitudeForFrequency(freq, sampleRate);
         
+        // Need to refactor this code eventually, too much repitition 
         if (!lowcut.isBypassed<0>())
             mag *= lowcut.get<0>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
         if (!lowcut.isBypassed<1>())
@@ -133,6 +134,22 @@ void SimpleEQAudioProcessorEditor::resized()
     peakGainSlider.setBounds(bounds.removeFromTop(bounds.getHeight() * 0.5));
     
     peakQualitySlider.setBounds(bounds);
+}
+
+void SimpleEQAudioProcessorEditor::parameterValueChanged(int parameterIndex, float newValue)
+{
+    parametersChanged.set(true);
+}
+
+void SimpleEQAudioProcessorEditor::timerCallback()
+{
+    // Def: bool compareAndSetBool (Type newValue, Type valueToCompare) noexcept
+    if (parametersChanged.compareAndSetBool(false, true))
+    {
+        // Update the monoChain
+        // Signal a repaint
+    }
+        
 }
 
 std::vector<juce::Component*> SimpleEQAudioProcessorEditor::getComps()
