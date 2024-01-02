@@ -173,7 +173,6 @@ void SimpleEQAudioProcessorEditor::timerCallback()
         // Signal a repaint
         repaint();
     }
-        
 }
 
 std::vector<juce::Component*> SimpleEQAudioProcessorEditor::getComps()
