@@ -24,11 +24,30 @@ highCutSlopeSliderAttachment(audioProcessor.apvts, "HighCut Slope", highCutSlope
     {
         addAndMakeVisible(comp);
     }
+    
+    // Need to listen for when the parameters are actually changed
+    // Grabbing params from audio processor and adding ourselves as a listener
+    // Note: getParameters() returns an array of pointers
+    const auto& params = audioProcessor.getParameters();
+    for (auto param : params )
+    {
+        param->addListener(this);
+    }
+    
+    // Starting with a 60 Hz refresher
+    startTimerHz(60);
+    
     setSize (600, 400);
 }
 
 SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
 {
+    // If we register as a listener, we also need to deregister as a listener
+    const auto& params = audioProcessor.getParameters();
+    for (auto param : params )
+    {
+        param->removeListener(this);
+    }
 }
 
 //==============================================================================
@@ -147,7 +166,12 @@ void SimpleEQAudioProcessorEditor::timerCallback()
     if (parametersChanged.compareAndSetBool(false, true))
     {
         // Update the monoChain
+        auto chainSettings = getChainSettings(audioProcessor.apvts);
+        auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
+        updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
+        
         // Signal a repaint
+        repaint();
     }
         
 }
