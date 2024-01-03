@@ -9,6 +9,90 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+//==============================================================================
+
+void LookAndFeel::drawRotarySlider(juce::Graphics &g,
+                                   int x, 
+                                   int y,
+                                   int width,
+                                   int height,
+                                   float sliderPosProportional,
+                                   float rotaryStartAngle,
+                                   float rotaryEndAngle,
+                                   juce::Slider & slider)
+{
+    auto bounds = juce::Rectangle<float>(x, y, width, height);
+    
+    // Colour = Ru Gu Bu
+    g.setColour(juce::Colour(97u, 18u, 167u));
+    g.fillEllipse(bounds);
+    
+    g.setColour(juce::Colour(255u, 154u, 1u));
+    g.drawEllipse(bounds, 1.f);
+    
+    auto center = bounds.getCentre();
+    juce::Path p;
+    
+    juce::Rectangle<float> r;
+    r.setLeft(center.getX() - 2);
+    r.setRight(center.getX() + 2);
+    r.setTop(bounds.getY());
+    r.setBottom(center.getY());
+    
+    p.addRectangle(r);
+    
+    jassert(rotaryStartAngle < rotaryEndAngle);
+    
+    auto sliderAngRad = juce::jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
+    
+    p.applyTransform(juce::AffineTransform().rotated(sliderAngRad, center.getX(), center.getY()));
+    
+    g.fillPath(p);
+    
+}
+
+
+void RotarySliderWithLabels::paint(juce::Graphics &g)
+{
+    // We will set the rotary to have a range of -π/4 to 5π/4 (-45 deg -- 225 deg)
+    auto startAng = juce::degreesToRadians(180.f + 45.f);
+    auto endAng = (juce::degreesToRadians(180.f - 45.f) + juce::MathConstants<float>::twoPi);
+    
+    auto range = getRange();
+    
+    auto sliderBounds = getSliderBounds();
+    
+    g.setColour(juce::Colours::red);
+    g.drawRect(getLocalBounds());
+    g.setColour(juce::Colours::yellow);
+    g.drawRect(sliderBounds);
+    
+    // We use jmap because we need to return a *normalized value* for the slider
+    getLookAndFeel().drawRotarySlider(g,
+                                      sliderBounds.getX(),
+                                      sliderBounds.getY(),
+                                      sliderBounds.getWidth(),
+                                      sliderBounds.getHeight(),
+                                      juce::jmap(getValue(),
+                                      range.getStart(),
+                                      range.getEnd(), 0.0, 1.0),
+                                      startAng, endAng, *this);
+}
+
+juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const
+{
+    auto bounds = getLocalBounds();
+    auto size = juce::jmin(bounds.getWidth(), bounds.getHeight());
+    
+    size -= getTextHeight() * 2;
+    juce::Rectangle<int> r;
+    r.setSize(size, size);
+    r.setCentre(bounds.getCentreX(), 0);
+    r.setY(2);
+    
+    return r;
+}
+
 ResponseCurveComponent::ResponseCurveComponent(SimpleEQAudioProcessor& p) : audioProcessor(p)
 {
     const auto& params = audioProcessor.getParameters();
