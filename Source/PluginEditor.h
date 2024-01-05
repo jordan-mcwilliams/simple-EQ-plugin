@@ -68,12 +68,17 @@ juce::Timer
     // Need to query an atomic flag to decide if chain needs updating and component needs to be repainted
     void timerCallback() override;
     void paint(juce::Graphics& g) override;
+    void resized() override;
     
 private:
     SimpleEQAudioProcessor& audioProcessor;
     juce::Atomic<bool> parametersChanged {false};
     MonoChain monoChain;
     void updateChain();
+    juce::Image background;
+    
+    juce::Rectangle<int> getRenderArea();
+    juce::Rectangle<int> getAnalysisArea();
 };
 
 //==============================================================================

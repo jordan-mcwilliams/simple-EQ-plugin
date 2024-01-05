@@ -218,8 +218,11 @@ void ResponseCurveComponent::updateChain()
 void ResponseCurveComponent::paint (juce::Graphics& g)
 {
     g.fillAll (juce::Colours::black);
+    g.drawImage(background, getLocalBounds().toFloat());
     
-    auto responseArea = getLocalBounds();
+    auto responseArea = getAnalysisArea();
+    // auto responseArea = getRenderArea();
+    // auto responseArea = getLocalBounds();
     // auto responseArea = bounds.removeFromTop(bounds.getHeight() * 0.33);
     auto w = responseArea.getWidth();
     auto& lowcut = monoChain.get<ChainPositions::LowCut>();
@@ -287,11 +290,85 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
     
     // Now we make a background border and draw the path
     g.setColour(juce::Colours::orange);
-    g.drawRoundedRectangle(responseArea.toFloat(), 4.f, 1.f);
+    g.drawRoundedRectangle(getRenderArea().toFloat(), 4.f, 1.f);
     
     g.setColour(juce::Colours::white);
     g.strokePath(responseCurve, juce::PathStrokeType(2.f));
     
+}
+
+void ResponseCurveComponent::resized()
+{
+    //using namespace juce;
+    background = juce::Image(juce::Image::PixelFormat::RGB, getWidth(), getHeight(), true);
+    juce::Graphics g(background);
+    
+    juce::Array<float> freqs
+    {
+        20, 30, 40, 50, 100,
+        200, 300, 400, 500, 1000,
+        2000, 3000, 4000, 5000, 10000,
+        20000
+    };
+    
+    auto renderArea = getAnalysisArea();
+    auto left = renderArea.getX();
+    auto right = renderArea.getRight();
+    auto top = renderArea.getY();
+    auto bottom = renderArea.getBottom();
+    auto width = renderArea.getWidth();
+    
+    juce::Array<float> xs;
+    for (auto f : freqs)
+    {
+        auto normX = juce::mapFromLog10(f, 20.f, 20000.f);
+        xs.add(left + width * normX);
+    }
+    
+    g.setColour(juce::Colours::dimgrey);
+    //for (auto f : freqs)
+    for (auto x : xs)
+    {
+        g.drawVerticalLine(x, top, bottom);
+        //auto normX = juce::mapFromLog10(f, 20.f, 20000.f);
+        //g.drawVerticalLine(getWidth() * normX, 0.f, getHeight());
+    }
+    
+    juce::Array<float> gain
+    {
+        -24, -12, 0, 12, 24
+    };
+    
+    for (auto gDb : gain)
+    {
+        auto y = juce::jmap(gDb, -24.f, 24.f, float(bottom), float(top)); //float(getHeight()), 0.f);
+        //g.drawHorizontalLine(y, 0, getWidth());
+        g.setColour(gDb == 0.f ? juce::Colour(0u, 172u, 1u) : juce::Colours::darkgrey);
+        g.drawHorizontalLine(y, left, right);
+    }
+    //g.drawRect(getAnalysisArea());
+}
+
+juce::Rectangle<int> ResponseCurveComponent::getRenderArea()
+{
+    auto bounds = getLocalBounds();
+    
+    //bounds.reduce(10, 8);//JUCE_LIVE_CONSTANT(5), JUCE_LIVE_CONSTANT(5));
+    
+    bounds.removeFromTop(12);
+    bounds.removeFromBottom(2);
+    bounds.removeFromLeft(20);
+    bounds.removeFromRight(20);
+    
+    return bounds;
+}
+
+juce::Rectangle<int> ResponseCurveComponent::getAnalysisArea()
+{
+    auto bounds = getRenderArea();
+    bounds.removeFromTop(4);
+    bounds.removeFromBottom(4);
+    return bounds;
 }
 
 //==============================================================================
