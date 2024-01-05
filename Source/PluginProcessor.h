@@ -16,10 +16,23 @@ struct Fifo
 {
     void prepare(int numChannels, int numSamples)
     {
+        static_assert(std::is_same_v<T, juce::AudioBuffer<float>>,
+                      "preparte(numChannels, numSamples) should only be used when the Fifo is holding juce::AudioBuffer<float>");
         for (auto& buffer : buffers)
         {
             buffer.setSize(numChannels, numSamples, false, true, true);
             buffer.clear();
+        }
+    }
+    
+    void prepare(size_t numElements)
+    {
+        static_assert(std::is_same_v<T, std::vector<float>>,
+                      "prepare(numElements) should only be used when the Fifo is holding std::vector<float>");
+        for (auto& buffer : buffers)
+        {
+            buffer.clear();
+            buffer.resize(numElements, 0);
         }
     }
     
@@ -250,6 +263,10 @@ public:
     // static because we don't use any member variables
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     juce::AudioProcessorValueTreeState apvts {*this, nullptr, "Parameters", createParameterLayout()};
+    
+    using BlockType = juce::AudioBuffer<float>;
+    SingleChannelSampleFifo<BlockType> leftChannelFifo { Channel::Left };
+    SingleChannelSampleFifo<BlockType> rightChannelFifo { Channel::Right };
 
 private:
     MonoChain leftChain, rightChain;
