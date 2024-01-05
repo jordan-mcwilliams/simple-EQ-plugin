@@ -64,6 +64,59 @@ void LookAndFeel::drawRotarySlider(juce::Graphics &g,
     }
 }
 
+void LookAndFeel::drawToggleButton (juce::Graphics &g,
+                            juce::ToggleButton & toggleButton,
+                            bool shouldDrawButtonAsHighlighted,
+                            bool shouldDrawButtonAsDown)
+{
+    if (auto* pb = dynamic_cast<PowerButton*>(&toggleButton))
+    {
+        juce::Path powerButton;
+        auto bounds = toggleButton.getLocalBounds();
+        auto size = juce::jmin(bounds.getWidth(), bounds.getHeight()) - 6;
+        auto r = bounds.withSizeKeepingCentre(size, size).toFloat();
+        
+        float ang = 30.f;
+        size -= 6;
+        
+        powerButton.addCentredArc(r.getCentreX(),
+                                  r.getCentreY(),
+                                  size * 0.5,
+                                  size * 0.5,
+                                  0.f,
+                                  juce::degreesToRadians(ang),
+                                  juce::degreesToRadians(360.f - ang),
+                                  true);
+        
+        powerButton.startNewSubPath(r.getCentreX(), r.getY());
+        powerButton.lineTo(r.getCentre());
+        
+        juce::PathStrokeType pst(2.f, juce::PathStrokeType::JointStyle::curved);
+        
+        auto color = toggleButton.getToggleState() ? juce::Colours::dimgrey : juce::Colour(0u, 172u, 1u);
+        
+        g.setColour(color);
+        g.strokePath(powerButton, pst);
+        g.drawEllipse(r, 2);
+    }
+    else if (auto* analyzerButton = dynamic_cast<AnalyzerButton*>(&toggleButton))
+    {
+        auto color = ! toggleButton.getToggleState() ? juce::Colours::dimgrey : juce::Colour(0u, 172u, 1u);
+        g.setColour(color);
+        auto bounds = toggleButton.getLocalBounds();
+        auto insetRect = bounds.reduced(4);
+        juce::Path randomPath;
+        juce::Random r;
+        randomPath.startNewSubPath(insetRect.getX(), insetRect.getY() + insetRect.getHeight() * r.nextFloat());
+        for (auto x = insetRect.getX() + 1; x < insetRect.getRight(); x += 2)
+        {
+            randomPath.lineTo(x, insetRect.getY() + insetRect.getHeight() * r.nextFloat());
+        }
+        g.strokePath(randomPath, juce::PathStrokeType(1.f));
+    }
+    
+}
+    
 void RotarySliderWithLabels::paint(juce::Graphics &g)
 {
     // We will set the rotary to have a range of -π/4 to 5π/4 (-45 deg -- 225 deg)
@@ -164,7 +217,6 @@ juce::String RotarySliderWithLabels::getDisplayString() const
 
 ResponseCurveComponent::ResponseCurveComponent(SimpleEQAudioProcessor& p) : 
 audioProcessor(p),
-//leftChannelFifo(&audioProcessor.leftChannelFifo)
 leftPathProducer(audioProcessor.leftChannelFifo),
 rightPathProducer(audioProcessor.rightChannelFifo)
 {
@@ -332,7 +384,7 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
                 mag *= lowcut.get<3>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
         }
 
-        if ( !monoChain.isBypassed<ChainPositions::LowCut>() )
+        if ( !monoChain.isBypassed<ChainPositions::HighCut>() )
         {
             if (!highcut.isBypassed<0>())
                 mag *= highcut.get<0>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
@@ -569,11 +621,20 @@ analyzerEnabledButtonAttachment(audioProcessor.apvts, "Analyzer Enabled", analyz
         addAndMakeVisible(comp);
     }
     
+    peakBypassButton.setLookAndFeel(&lnf);
+    lowcutBypassButton.setLookAndFeel(&lnf);
+    highcutBypassButton.setLookAndFeel(&lnf);
+    analyzerEnabledButton.setLookAndFeel(&lnf);
+    
     setSize (600, 480);
 }
 
 SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
 {
+    peakBypassButton.setLookAndFeel(nullptr);
+    lowcutBypassButton.setLookAndFeel(nullptr);
+    highcutBypassButton.setLookAndFeel(nullptr);
+    analyzerEnabledButton.setLookAndFeel(nullptr);
 }
 
 //==============================================================================
@@ -590,6 +651,15 @@ void SimpleEQAudioProcessorEditor::resized()
     // We are reserving the top 3rd of our display for frequency response of filter chain
     // the bottom 2/3rds will be for all the sliders
     auto bounds = getLocalBounds();
+    auto analyzerEnabledArea = bounds.removeFromTop(25);
+    analyzerEnabledArea.setWidth(100);
+    analyzerEnabledArea.setX(5);
+    analyzerEnabledArea.removeFromTop(2);
+    
+    analyzerEnabledButton.setBounds(analyzerEnabledArea);
+    
+    bounds.removeFromTop(5);
+    
     float hRatio = 25.f / 100.f; //JUCE_LIVE_CONSTANT(33) / 100.f;
     auto responseArea = bounds.removeFromTop(bounds.getHeight() * hRatio);
     
