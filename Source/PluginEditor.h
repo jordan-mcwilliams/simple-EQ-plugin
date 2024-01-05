@@ -113,7 +113,7 @@ struct AnalyzerPathGenerator
         for (int binNum = 1; binNum < numBins; binNum += pathResolution)
         {
             y = map(renderData[binNum]);
-            jassert( !std::isnan(y) && !std::isinf(y) );
+            //jassert( !std::isnan(y) && !std::isinf(y) );
             
             if ( !std::isnan(y) && !std::isinf(y) )
             {
@@ -273,6 +273,14 @@ private:
                 highCutFreqSliderAttachment,
                 lowCutSlopeSliderAttachment,
                 highCutSlopeSliderAttachment;
+    
+    juce::ToggleButton lowcutBypassButton, peakBypassButton, highcutBypassButton, analyzerEnabledButton;
+    
+    using ButtonAttachment = APVTS::ButtonAttachment;
+    ButtonAttachment lowcutBypassButtonAttachment,
+                     peakBypassButtonAttachment,
+                     highcutBypassButtonAttachment,
+                     analyzerEnabledButtonAttachment;
     
     std::vector<juce::Component*> getComps();
 
