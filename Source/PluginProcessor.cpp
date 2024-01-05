@@ -182,13 +182,13 @@ void SimpleEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     juce::dsp::AudioBlock<float> block(buffer);
     
     
-    buffer.clear();
+//    buffer.clear();
 //    for (int i = 0; i < buffer.getNumSamples(); ++i)
 //    {
 //        buffer.setSample(0, i, osc.processSample(0));
 //    }
-    juce::dsp::ProcessContextReplacing<float> stereoContext(block);
-    osc.process(stereoContext);
+//    juce::dsp::ProcessContextReplacing<float> stereoContext(block);
+//    osc.process(stereoContext);
     
     // Extracting channels from the buffer which will then be wrapped inside more audio blocks
     auto leftBlock = block.getSingleChannelBlock(0);
