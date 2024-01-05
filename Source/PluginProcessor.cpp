@@ -120,6 +120,12 @@ void SimpleEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     leftChannelFifo.prepare(samplesPerBlock);
     rightChannelFifo.prepare(samplesPerBlock);
     
+    osc.initialise([](float x) { return std::sin(x); });
+    
+    spec.numChannels = getTotalNumOutputChannels();
+    osc.prepare(spec);
+    osc.setFrequency(500);
+    
 }
 
 void SimpleEQAudioProcessor::releaseResources()
@@ -139,8 +145,8 @@ bool SimpleEQAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts)
     // In this template code we only support mono or stereo.
     // Some plugin hosts, such as certain GarageBand versions, will only
     // load plugins that support stereo bus layouts.
-    if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
-     && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
+    if (//layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
+     layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
 
     // This checks if the input layout matches the output layout
@@ -174,6 +180,15 @@ void SimpleEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     // ProcessingChain requires a ProcessingContext to be passed to it in order to run the audio through the links in the chain
     // to make a ProcessingContext we need to supply it with an AudioBlock instance
     juce::dsp::AudioBlock<float> block(buffer);
+    
+    
+    buffer.clear();
+//    for (int i = 0; i < buffer.getNumSamples(); ++i)
+//    {
+//        buffer.setSample(0, i, osc.processSample(0));
+//    }
+    juce::dsp::ProcessContextReplacing<float> stereoContext(block);
+    osc.process(stereoContext);
     
     // Extracting channels from the buffer which will then be wrapped inside more audio blocks
     auto leftBlock = block.getSingleChannelBlock(0);
