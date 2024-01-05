@@ -148,7 +148,7 @@ juce::String RotarySliderWithLabels::getDisplayString() const
     }
     else
     {
-        jassertfalse;
+        jassertfalse; // this shouldn't happen!
     }
     
     if (suffix.isNotEmpty())
@@ -299,15 +299,14 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
 
 void ResponseCurveComponent::resized()
 {
-    //using namespace juce;
     background = juce::Image(juce::Image::PixelFormat::RGB, getWidth(), getHeight(), true);
     juce::Graphics g(background);
     
     juce::Array<float> freqs
     {
-        20, /*30, 40,*/ 50, 100,
-        200, /*300, 400, */500, 1000,
-        2000, /*3000, 4000, */ 5000, 10000,
+        20, 50, 100,
+        200, 500, 1000,
+        2000, 5000, 10000,
         20000
     };
     
@@ -326,12 +325,9 @@ void ResponseCurveComponent::resized()
     }
     
     g.setColour(juce::Colours::dimgrey);
-    //for (auto f : freqs)
     for (auto x : xs)
     {
         g.drawVerticalLine(x, top, bottom);
-        //auto normX = juce::mapFromLog10(f, 20.f, 20000.f);
-        //g.drawVerticalLine(getWidth() * normX, 0.f, getHeight());
     }
     
     juce::Array<float> gain
@@ -341,12 +337,11 @@ void ResponseCurveComponent::resized()
     
     for (auto gDb : gain)
     {
-        auto y = juce::jmap(gDb, -24.f, 24.f, float(bottom), float(top)); //float(getHeight()), 0.f);
-        //g.drawHorizontalLine(y, 0, getWidth());
+        auto y = juce::jmap(gDb, -24.f, 24.f, float(bottom), float(top));
         g.setColour(gDb == 0.f ? juce::Colour(0u, 172u, 1u) : juce::Colours::darkgrey);
         g.drawHorizontalLine(y, left, right);
     }
-    //g.drawRect(getAnalysisArea());
+    
     g.setColour(juce::Colours::lightgrey);
     const int fontHeight = 10;
     g.setFont(fontHeight);
@@ -398,14 +393,22 @@ void ResponseCurveComponent::resized()
         g.setColour(gDb == 0.f ? juce::Colour(0u, 172u, 1u) : juce::Colours::lightgrey);
         
         g.drawFittedText(str, r, juce::Justification::centred, 1);
+        
+        str.clear();
+        str << (gDb - 24.f);
+        
+        r.setX(1);
+        textWidth = g.getCurrentFont().getStringWidth(str);
+        r.setSize(textWidth, fontHeight);
+        g.setColour(juce::Colours::lightgrey);
+        g.drawFittedText(str, r, juce::Justification::centred, 1);
+        
     }
 }
 
 juce::Rectangle<int> ResponseCurveComponent::getRenderArea()
 {
     auto bounds = getLocalBounds();
-    
-    //bounds.reduce(10, 8);//JUCE_LIVE_CONSTANT(5), JUCE_LIVE_CONSTANT(5));
     
     bounds.removeFromTop(12);
     bounds.removeFromBottom(2);
